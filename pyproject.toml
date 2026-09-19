@@ -12,3 +12,6 @@ llm-expert-router-demo = "llm_expert_router.demo:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/llm_expert_router"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
