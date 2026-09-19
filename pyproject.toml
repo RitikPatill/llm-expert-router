@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "llm-expert-router"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[project.scripts]
+llm-expert-router-demo = "llm_expert_router.demo:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/llm_expert_router"]

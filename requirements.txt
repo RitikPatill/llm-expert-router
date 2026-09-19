@@ -1,0 +1,26 @@
+# API server (M3)
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+
+# LLM client (M2+)
+openai==1.57.0
+
+# Config / validation (M2)
+pydantic==2.9.2
+pyyaml==6.0.2
+
+# Telemetry (M3)
+aiosqlite==0.20.0
+
+# Dashboard (M5)
+streamlit==1.40.1
+plotly==5.24.1
+
+# CLI (M4)
+rich==13.9.4
+httpx==0.28.0
+
+# Dev
+pytest==8.3.3
+pytest-asyncio==0.24.0
+hatchling==1.26.3
