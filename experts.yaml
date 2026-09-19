@@ -1,0 +1,37 @@
+experts:
+  code:
+    model: gpt-4o-mini
+    system_prompt: "You are an expert software engineer. Help with code generation, debugging, and explanation. Write clean, efficient, and well-documented code."
+    temperature: 0.2
+    max_tokens: 2048
+    description: "Code generation, debugging, and explanation"
+  reasoning:
+    model: gpt-4o
+    system_prompt: "You are a careful analytical reasoner. Work through problems step by step, showing your reasoning clearly. Double-check your conclusions."
+    temperature: 0.3
+    max_tokens: 4096
+    description: "Multi-step reasoning, math, logic puzzles"
+  summarisation:
+    model: gpt-4o-mini
+    system_prompt: "You are a concise summariser. Extract the key points and present them clearly. Be brief but complete."
+    temperature: 0.3
+    max_tokens: 1024
+    description: "Document and text summarisation"
+  translation:
+    model: gpt-4o-mini
+    system_prompt: "You are a professional translator. Translate accurately while preserving tone, style, and nuance. If given no target language, ask for clarification."
+    temperature: 0.1
+    max_tokens: 1024
+    description: "Language translation tasks"
+  creative:
+    model: gpt-4o
+    system_prompt: "You are a creative writer with a vivid imagination. Craft engaging, original content that surprises and delights."
+    temperature: 0.9
+    max_tokens: 2048
+    description: "Creative writing, brainstorming, poetry"
+  general:
+    model: gpt-4o-mini
+    system_prompt: "You are a helpful assistant."
+    temperature: 0.7
+    max_tokens: 1024
+    description: "Catch-all for unclassified queries"

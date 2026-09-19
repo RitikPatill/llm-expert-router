@@ -14,15 +14,22 @@ The design is inspired by recent work on temporally-extended Mixture-of-Experts 
 
 ---
 
-## What works now (M1)
+## What works now (M2)
 
-- Python package installable via `pip install -e .` (hatchling build backend, `src/` layout)
-- Package version exported as `llm_expert_router.__version__ == "0.1.0"` and verified by `tests/test_scaffold.py`
-- PEP 561 `py.typed` marker present — the package is typed from the start
-- `.env.example` documents required environment variables (`OPENAI_API_KEY`)
-- MIT license, `.gitignore`, and `requirements.txt` in place
+**Expert Registry** (`src/llm_expert_router/registry.py`)
+- `load_experts(path)` reads `experts.yaml` and validates it with Pydantic v2 (`extra="forbid"` catches typos)
+- Six built-in experts: `code`, `reasoning`, `summarisation`, `translation`, `creative`, `general`
+- Each expert specifies `model`, `system_prompt`, `temperature`, `max_tokens`, and `description`
 
-Classifier, expert registry, API server, telemetry, CLI, and dashboard are all planned — see the Milestones table below.
+**Prompt Classifier** (`src/llm_expert_router/classifier.py`)
+- `await classify(prompt, experts, client?)` returns `(category, method)` where `method` is `"llm"` or `"heuristic"`
+- **LLM path** — zero-shot call to `gpt-4o-mini` at `temperature=0`; deterministic and cheap
+- **Heuristic fallback** — regex keyword patterns run when no client is provided or the API raises
+- Falls back to `"general"` when no pattern matches or the LLM returns an unknown label
+
+**M1** (scaffold, README, package structure) is also complete.
+
+API server, telemetry, CLI, and dashboard are all planned — see the Milestones table below.
 
 ---
 
@@ -84,7 +91,7 @@ streamlit run llm_expert_router/dashboard.py
 | # | Milestone | Status |
 |---|-----------|--------|
 | M1 | Scaffold + README | ✅ |
-| M2 | Classifier + Expert Registry | 🔲 |
+| M2 | Classifier + Expert Registry | ✅ |
 | M3 | FastAPI `/chat` endpoint + SQLite telemetry | 🔲 |
 | M4 | CLI demo script (`demo.py`) | 🔲 |
 | M5 | Streamlit dashboard | 🔲 |
@@ -99,9 +106,14 @@ llm-expert-router/
 ├── src/
 │   └── llm_expert_router/
 │       ├── __init__.py       # package version
+│       ├── classifier.py     # LLM + heuristic prompt classifier
+│       ├── registry.py       # Pydantic expert registry loader
 │       └── py.typed          # PEP 561 marker
 ├── tests/
-│   └── test_scaffold.py
+│   ├── test_classifier.py    # classifier unit tests (7 tests)
+│   ├── test_registry.py      # registry unit tests (4 tests)
+│   └── test_scaffold.py      # package smoke test
+├── experts.yaml              # six built-in expert definitions
 ├── .env.example
 ├── .gitignore
 ├── LICENSE
