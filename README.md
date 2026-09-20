@@ -14,7 +14,17 @@ The design is inspired by recent work on temporally-extended Mixture-of-Experts 
 
 ---
 
-## What works now (M2)
+## What works now (M3)
+
+**FastAPI Server** (`src/llm_expert_router/app.py`)
+- `POST /chat` — accepts `{"message": "..."}`, runs classifier, selects expert, calls OpenAI, returns `response` + `routing_metadata`
+- `GET /stats` — returns per-expert aggregate: `expert_name`, `calls`, `avg_latency_ms`, `total_cost_usd`
+- Start with: `uvicorn src.llm_expert_router.app:app --reload`
+- Configure via env vars: `OPENAI_API_KEY`, `ROUTER_EXPERTS_FILE` (default `./experts.yaml`), `ROUTER_DB_PATH` (default `./telemetry.db`)
+
+**SQLite Telemetry** (`src/llm_expert_router/telemetry.py`)
+- Every request logged: timestamp, task_category, expert_name, model, classification_method, latency_ms, prompt_tokens, completion_tokens, estimated_cost_usd
+- SQLAlchemy 2.0 Core (async, no ORM) with `sqlite+aiosqlite://` driver
 
 **Expert Registry** (`src/llm_expert_router/registry.py`)
 - `load_experts(path)` reads `experts.yaml` and validates it with Pydantic v2 (`extra="forbid"` catches typos)
@@ -27,39 +37,48 @@ The design is inspired by recent work on temporally-extended Mixture-of-Experts 
 - **Heuristic fallback** — regex keyword patterns run when no client is provided or the API raises
 - Falls back to `"general"` when no pattern matches or the LLM returns an unknown label
 
-**M1** (scaffold, README, package structure) is also complete.
+**M1 & M2** (scaffold, registry, classifier) are also complete.
 
-API server, telemetry, CLI, and dashboard are all planned — see the Milestones table below.
+CLI and dashboard are planned — see the Milestones table below.
 
 ---
 
 ## Architecture
 
 ```
-User Prompt
-    │
-    ▼
-┌─────────────┐
-│  Classifier  │  ← zero-shot LLM call / keyword fallback
-└──────┬──────┘
-       │  task category
-       ▼
-┌──────────────────┐
-│  Expert Registry  │  ← experts.yaml
-└──────┬───────────┘
-       │  model + system prompt + params
-       ▼
-┌──────────────┐
-│  LLM API Call │
-└──────┬───────┘
-       │  response
-       ▼
-┌──────────────────┐
-│ SQLite Telemetry  │  ← latency, tokens, cost
-└──────────────────┘
-       │
-       ▼
-  Streamlit Dashboard
+                        User Prompt
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │   POST /chat     │  FastAPI endpoint
+                    └────────┬────────┘
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │   Classifier    │  ← LLM zero-shot / heuristic fallback
+                    └────────┬────────┘
+                             │  task category
+                             ▼
+                    ┌─────────────────┐
+                    │ Expert Registry │  ← experts.yaml
+                    └────────┬────────┘
+                             │  model + system prompt + params
+                             ▼
+                    ┌─────────────────┐
+                    │  LLM API Call   │
+                    └────────┬────────┘
+                             │
+               ┌─────────────┴──────────────┐
+               │                            │
+               ▼                            ▼
+    response + routing_metadata    ┌─────────────────────┐
+       returned to caller          │  SQLite Telemetry   │  ← async write
+                                   │  (requests table)   │
+                                   └──────────┬──────────┘
+                                              │
+                                              ▼ (M5)
+                                    Streamlit Dashboard
+                                      GET /stats
 ```
 
 ---
@@ -74,8 +93,8 @@ pip install -e .
 cp .env.example .env
 # edit .env and set OPENAI_API_KEY
 
-# 3. Start the API server (available after M3)
-uvicorn llm_expert_router.server:app --reload
+# 3. Start the API server
+uvicorn src.llm_expert_router.app:app --reload
 
 # 4. Run the demo script (available after M4)
 python demo.py
@@ -92,7 +111,7 @@ streamlit run llm_expert_router/dashboard.py
 |---|-----------|--------|
 | M1 | Scaffold + README | ✅ |
 | M2 | Classifier + Expert Registry | ✅ |
-| M3 | FastAPI `/chat` endpoint + SQLite telemetry | 🔲 |
+| M3 | FastAPI `/chat` endpoint + SQLite telemetry | ✅ |
 | M4 | CLI demo script (`demo.py`) | 🔲 |
 | M5 | Streamlit dashboard | 🔲 |
 | M6 | Polish + demo GIF | 🔲 |
@@ -106,10 +125,13 @@ llm-expert-router/
 ├── src/
 │   └── llm_expert_router/
 │       ├── __init__.py       # package version
+│       ├── app.py            # FastAPI server (/chat, /stats)
 │       ├── classifier.py     # LLM + heuristic prompt classifier
 │       ├── registry.py       # Pydantic expert registry loader
+│       ├── telemetry.py      # SQLAlchemy async SQLite telemetry
 │       └── py.typed          # PEP 561 marker
 ├── tests/
+│   ├── test_app.py           # FastAPI endpoint tests (6 tests)
 │   ├── test_classifier.py    # classifier unit tests (7 tests)
 │   ├── test_registry.py      # registry unit tests (4 tests)
 │   └── test_scaffold.py      # package smoke test
