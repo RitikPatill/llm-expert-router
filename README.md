@@ -14,7 +14,7 @@ The design is inspired by recent work on temporally-extended Mixture-of-Experts 
 
 ---
 
-## What works now (M4)
+## What works now (M5)
 
 **FastAPI Server** (`src/llm_expert_router/app.py`)
 - `POST /chat` — accepts `{"message": "..."}`, runs classifier, selects expert, calls OpenAI, returns `response` + `routing_metadata`
@@ -50,7 +50,14 @@ The design is inspired by recent work on temporally-extended Mixture-of-Experts 
 - `make demo` — run demo script against a running server (set `BASE_URL=...` to override)
 - `make run` — start server in background, wait for readiness, run demo, stop server (requires bash)
 
-Dashboard is planned — see the Milestones table below.
+**Streamlit Dashboard** (`dashboard.py`)
+- Live auto-refreshing dashboard (every 5 seconds via `st.rerun()`)
+- Pie chart: routing distribution by expert
+- Bar chart: average latency per expert (ms)
+- KPI metrics: total calls and total estimated cost
+- Scrollable raw request log table
+- Start with: `streamlit run dashboard.py`
+- Configure via env vars: `ROUTER_DB_PATH` (default `./telemetry.db`), `DASHBOARD_REFRESH_S` (default `5`)
 
 ---
 
@@ -110,8 +117,8 @@ uvicorn src.llm_expert_router.app:app --reload
 # 4. Run the demo against the server (one-shot: make run)
 python demo.py
 
-# 5. Open the dashboard (available after M5)
-streamlit run llm_expert_router/dashboard.py
+# 5. Open the live dashboard
+streamlit run dashboard.py
 ```
 
 ---
@@ -124,7 +131,7 @@ streamlit run llm_expert_router/dashboard.py
 | M2 | Classifier + Expert Registry | ✅ |
 | M3 | FastAPI `/chat` endpoint + SQLite telemetry | ✅ |
 | M4 | CLI demo script (`demo.py`) | ✅ |
-| M5 | Streamlit dashboard | 🔲 |
+| M5 | Streamlit dashboard | ✅ |
 | M6 | Polish + demo GIF | 🔲 |
 
 ---
@@ -147,7 +154,9 @@ llm-expert-router/
 │   ├── test_classifier.py    # classifier unit tests (7 tests)
 │   ├── test_demo.py          # demo unit tests (5 tests)
 │   ├── test_registry.py      # registry unit tests (4 tests)
-│   └── test_scaffold.py      # package smoke test
+│   ├── test_scaffold.py      # package smoke test
+│   └── test_dashboard.py     # dashboard load_data unit tests
+├── dashboard.py              # Streamlit live dashboard (M5)
 ├── demo.py                   # thin shim — `python demo.py` from repo root
 ├── experts.yaml              # six built-in expert definitions
 ├── Makefile                  # make serve / demo / run
