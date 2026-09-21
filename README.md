@@ -14,7 +14,7 @@ The design is inspired by recent work on temporally-extended Mixture-of-Experts 
 
 ---
 
-## What works now (M3)
+## What works now (M4)
 
 **FastAPI Server** (`src/llm_expert_router/app.py`)
 - `POST /chat` — accepts `{"message": "..."}`, runs classifier, selects expert, calls OpenAI, returns `response` + `routing_metadata`
@@ -39,7 +39,18 @@ The design is inspired by recent work on temporally-extended Mixture-of-Experts 
 
 **M1 & M2** (scaffold, registry, classifier) are also complete.
 
-CLI and dashboard are planned — see the Milestones table below.
+**CLI Demo Script** (`demo.py` / `src/llm_expert_router/demo.py`)
+- Fires 10 diverse prompts against the running server and renders a colour-coded `rich.Table`
+- Columns: `#` · Prompt · Category · Expert · Model · Method · Latency(ms) · Cost(USD)
+- Summary footer shows total calls and total estimated cost
+- `python demo.py --url http://localhost:8000` (default URL) or use `make demo`
+
+**Makefile**
+- `make serve` — start uvicorn in dev mode with reload
+- `make demo` — run demo script against a running server (set `BASE_URL=...` to override)
+- `make run` — start server in background, wait for readiness, run demo, stop server (requires bash)
+
+Dashboard is planned — see the Milestones table below.
 
 ---
 
@@ -96,7 +107,7 @@ cp .env.example .env
 # 3. Start the API server
 uvicorn src.llm_expert_router.app:app --reload
 
-# 4. Run the demo script (available after M4)
+# 4. Run the demo against the server (one-shot: make run)
 python demo.py
 
 # 5. Open the dashboard (available after M5)
@@ -112,7 +123,7 @@ streamlit run llm_expert_router/dashboard.py
 | M1 | Scaffold + README | ✅ |
 | M2 | Classifier + Expert Registry | ✅ |
 | M3 | FastAPI `/chat` endpoint + SQLite telemetry | ✅ |
-| M4 | CLI demo script (`demo.py`) | 🔲 |
+| M4 | CLI demo script (`demo.py`) | ✅ |
 | M5 | Streamlit dashboard | 🔲 |
 | M6 | Polish + demo GIF | 🔲 |
 
@@ -129,13 +140,17 @@ llm-expert-router/
 │       ├── classifier.py     # LLM + heuristic prompt classifier
 │       ├── registry.py       # Pydantic expert registry loader
 │       ├── telemetry.py      # SQLAlchemy async SQLite telemetry
+│       ├── demo.py           # CLI demo logic (10 prompts → rich table)
 │       └── py.typed          # PEP 561 marker
 ├── tests/
 │   ├── test_app.py           # FastAPI endpoint tests (6 tests)
 │   ├── test_classifier.py    # classifier unit tests (7 tests)
+│   ├── test_demo.py          # demo unit tests (5 tests)
 │   ├── test_registry.py      # registry unit tests (4 tests)
 │   └── test_scaffold.py      # package smoke test
+├── demo.py                   # thin shim — `python demo.py` from repo root
 ├── experts.yaml              # six built-in expert definitions
+├── Makefile                  # make serve / demo / run
 ├── .env.example
 ├── .gitignore
 ├── LICENSE
