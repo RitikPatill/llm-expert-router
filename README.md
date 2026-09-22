@@ -1,5 +1,9 @@
 # LLM Expert Router
 
+
+> **Video walkthrough:** https://youtu.be/N55yENl_3g8
+> **60-second overview:** https://youtu.be/bIt0JY9Xcbk
+
 > MoE-inspired prompt router that classifies tasks and dispatches to specialised LLM expert configs, with cost & latency telemetry.
 
 <!-- TODO: replace with a 5-10 second demo gif. Record with ScreenToGif on
